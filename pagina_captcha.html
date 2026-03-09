@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="script-src 'self' 'unsafe-eval' 'unsafe-inline' data: *; object-src 'self' *; default-src 'self' 'unsafe-eval' 'unsafe-inline' data: *;">
+  <title>Página de Demonstração - Captcha Alibaba Cloud V3</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f2f5;
+    }
+
+    .container {
+      padding: 40px;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    #button {
+      padding: 10px 20px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #button:hover {
+      background-color: #0056b3;
+    }
+
+    #captcha-element {
+      margin-top: 20px;
+    }
+  </style>
+
+  <!-- CONFIGURAÇÃO COM SUAS CREDENCIAIS -->
+  <script type="text/javascript">
+    (function () {
+      let urlImagemSlider = '';
+      let urlImagemFundo = '';
+
+      function atualizarExibicaoImagens() {
+        const divExibicao = document.getElementById('exibicao-urls-imagens');
+        if (divExibicao) {
+          divExibicao.innerHTML = `
+              <div style="margin-bottom: 5px;"><strong>Links das Imagens:</strong></div>
+              <div style="font-size: 12px; margin-bottom: 5px;">
+                <strong>Imagem do Slider:</strong><br>
+                <span style="word-break: break-all; color: #007bff;">${urlImagemSlider || 'Não obtida'}</span>
+              </div>
+              <div style="font-size: 12px; margin-bottom: 10px;">
+                <strong>Imagem de Fundo:</strong><br>
+                <span style="word-break: break-all; color: #007bff;">${urlImagemFundo || 'Não obtida'}</span>
+              </div>
+              <div style="margin-bottom: 10px;">
+                <strong>Comando Python:</strong><br>
+                <span style="background: #f8f9fa; padding: 5px; border-radius: 3px; font-family: monospace; font-size: 11px; display: block; margin-top: 5px;">
+                  python calcular_distancia.py "${urlImagemSlider}" "${urlImagemFundo}"
+                </span>
+              </div>
+            `;
+        }
+      }
+
+      const fetchOriginal = window.fetch;
+      window.fetch = function (...args) {
+        const url = args[0];
+        if (typeof url === 'string') {
+          if (url.includes('shadow.png')) {
+            urlImagemSlider = url;
+            console.log('Capturada imagem do slider:', urlImagemSlider);
+            atualizarExibicaoImagens();
+          } else if (url.includes('back.png')) {
+            urlImagemFundo = url;
+            console.log('Capturada imagem de fundo:', urlImagemFundo);
+            atualizarExibicaoImagens();
+          }
+        }
+        return fetchOriginal.apply(this, args);
+      };
+
+      const srcOriginalImagem = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+      Object.defineProperty(HTMLImageElement.prototype, 'src', {
+        get() {
+          return srcOriginalImagem.get.call(this);
+        },
+        set(value) {
+          if (value.includes('shadow.png')) {
+            urlImagemSlider = value;
+            console.log('Capturada imagem do slider:', urlImagemSlider);
+            atualizarExibicaoImagens();
+          } else if (value.includes('back.png')) {
+            urlImagemFundo = value;
+            console.log('Capturada imagem de fundo:', urlImagemFundo);
+            atualizarExibicaoImagens();
+          }
+          return srcOriginalImagem.set.call(this, value);
+        }
+      });
+
+      const xhrOpenOriginal = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (method, url, ...args) {
+        if (typeof url === 'string') {
+          if (url.includes('shadow.png')) {
+            urlImagemSlider = url;
+            console.log('XHR capturou imagem do slider:', urlImagemSlider);
+            atualizarExibicaoImagens();
+          } else if (url.includes('back.png')) {
+            urlImagemFundo = url;
+            console.log('XHR capturou imagem de fundo:', urlImagemFundo);
+            atualizarExibicaoImagens();
+          }
+        }
+        return xhrOpenOriginal.apply(this, [method, url, ...args]);
+      };
+
+      window.atualizarExibicaoImagens = atualizarExibicaoImagens;
+      window.obterUrlImagemSlider = () => urlImagemSlider;
+      window.obterUrlImagemFundo = () => urlImagemFundo;
+    })();
+
+    // ✅ SUAS CREDENCIAIS AQUI:
+    window.AliyunCaptchaConfig = {
+      region: 'cn',
+      prefix: 'dlw3vug'  // ✅ SEU PREFIXO
+    };
+  </script>
+
+  <!-- Biblioteca da Aliyun -->
+  <script type="text/javascript" charset="utf-8"
+    src="https://o.alicdn.com/captcha-frontend/aliyunCaptcha/AliyunCaptcha.js"></script>
+
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>Página de Demonstração</h1>
+    <p>Clique no botão abaixo para acionar o captcha pop-up da Alibaba Cloud.</p>
+    <div id="captcha-element"></div>
+    <div
+      style="position: fixed; top: 20px; right: 20px; z-index: 9999; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px;">
+      <div style="margin-bottom: 10px;">
+        <label for="distancia-arrasto" style="display: block; margin-bottom: 5px; font-size: 14px;">Distância de arrasto (pixels):</label>
+        <input type="number" id="distancia-arrasto" value="238"
+          style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <label for="distancia-shadow" style="display: block; margin-bottom: 5px; font-size: 14px;">Distância Shadow (pixels):</label>
+        <input type="number" id="distancia-shadow" placeholder="Insira a distância calculada pelo Python"
+          style="width: 120px; padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+        <button id="buscar-slider"
+          style="margin-left: 5px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">Buscar Slider</button>
+      </div>
+      <button id="testar-arrasto"
+        style="padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px;">Testar Arrasto do Slider</button>
+      <button id="calcular-auto"
+        style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px; width: 100%;">Calcular Distância Automaticamente</button>
+      <button id="construir-mapeamento"
+        style="padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px; width: 100%;">Construir Tabela de Correspondência</button>
+
+      <div id="exibicao-urls-imagens" style="border-top: 1px solid #eee; padding-top: 10px; font-size: 12px;">
+        <div style="margin-bottom: 5px;"><strong>Monitoramento de Links de Imagens:</strong></div>
+        <div style="color: #666;">Aguardando carregamento das imagens do captcha...</div>
+      </div>
+    </div>
+  </div>
+
+
+  <script type="text/javascript">
+    window.onload = function () {
+
+      let intervaloVisibilidade = null;
+      let mapeamentoSliderShadow = {};
+
+      function forcarCaptchaVisivel(ativar) {
+        const janelaCaptcha = document.getElementById('aliyunCaptcha-window-float');
+        if (!janelaCaptcha) return;
+
+        if (ativar) {
+          if (intervaloVisibilidade) clearInterval(intervaloVisibilidade);
+          console.log('Iniciando forçamento de visibilidade da janela do captcha...');
+          intervaloVisibilidade = setInterval(() => {
+            if (janelaCaptcha.style.display !== 'block') {
+              janelaCaptcha.style.display = 'block';
+            }
+          }, 10);
+        } else {
+          if (intervaloVisibilidade) {
+            clearInterval(intervaloVisibilidade);
+            intervaloVisibilidade = null;
+            console.log('Parando forçamento de visibilidade do captcha.');
+          }
+        }
+      }
+
+      function esperar(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      function aguardarElemento(seletor, timeout = 5000) {
+        return new Promise((resolve, reject) => {
+          const tempoInicio = Date.now();
+          const intervalo = setInterval(() => {
+            const elemento = document.querySelector(seletor);
+            if (elemento && elemento.getBoundingClientRect().width > 0) {
+              clearInterval(intervalo);
+              resolve(elemento);
+            } else if (Date.now() - tempoInicio > timeout) {
+              clearInterval(intervalo);
+              reject(new Error(`Timeout aguardando elemento ${seletor}`));
+            }
+          }, 100);
+        });
+      }
+
+      // ✅ SUAS CREDENCIAIS AQUI TAMBÉM:
+      window.initAliyunCaptcha({
+        SceneId: "f1kxzj0cm",  // ✅ SEU SCENE ID
+        mode: "float",
+        element: "#captcha-element",
+        button: "#button",
+        language: "cn",
+        slideStyle: {
+          width: 368,
+          height: 40,
+        },
+        success: function (parametrosVerificacao) {
+          console.log("Verificação aprovada! Parâmetros:", parametrosVerificacao);
+          alert("Verificação bem-sucedida! Consulte o console para obter os parâmetros de assinatura.");
+        },
+        fail: function (resultadoFalha) {
+          console.error("Verificação falhou:", resultadoFalha);
+          alert("Verificação falhou, consulte o console para detalhes.");
+        },
+        getInstance: function (instancia) {
+          console.log("Instância do captcha obtida:", instancia);
+        }
+      });
+
+      async function construirMapeamentoSliderShadow() {
+        console.log('=== Iniciando construção da tabela Slider-Shadow ===');
+
+        try {
+          forcarCaptchaVisivel(true);
+          let slider = document.getElementById('aliyunCaptcha-sliding-slider');
+          if (!slider || slider.getBoundingClientRect().width === 0) {
+            console.log('Captcha não exibido, tentando clicar em "Clique para começar a verificação"');
+            document.getElementById('aliyunCaptcha-captcha-text')?.click();
+            slider = await aguardarElemento('#aliyunCaptcha-sliding-slider');
+            console.log('Elemento slider carregado!');
+          }
+
+          const imagemShadow = document.getElementById('aliyunCaptcha-puzzle');
+          if (!imagemShadow) throw new Error('Elemento de imagem Shadow não encontrado');
+
+          mapeamentoSliderShadow = {};
+          const retSlider = slider.getBoundingClientRect();
+          const startX = retSlider.left + retSlider.width / 2;
+          const startY = retSlider.top + retSlider.height / 2;
+          const distanciaArrastoTotal = 300;
+
+          slider.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: startX, clientY: startY, button: 0 }));
+          console.log('Preparando para arrastar para frente e registrar diretamente...');
+
+          function animarArrasto(tempoInicio, duracao, distancia, aoFinalizar) {
+            const animar = async (tempoAtual) => {
+              const tempoDecorrido = tempoAtual - tempoInicio;
+              const progresso = Math.min(tempoDecorrido / duracao, 1);
+              const posAtual = startX + distancia * progresso;
+
+              slider.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, clientX: posAtual, clientY: startY, button: 0 }));
+
+              if (distancia > 0) {
+                const movSliderComandado = Math.round(distanciaArrastoTotal * progresso);
+                const movShadow = Math.round(parseFloat(imagemShadow.style.left) || 0);
+
+                if (movSliderComandado > 0 && !mapeamentoSliderShadow[movSliderComandado]) {
+                  mapeamentoSliderShadow[movSliderComandado] = movShadow;
+                }
+              }
+
+              if (progresso < 1) {
+                requestAnimationFrame(animar);
+              } else {
+                aoFinalizar();
+              }
+            };
+            requestAnimationFrame(animar);
+          }
+
+          animarArrasto(performance.now(), 8000, distanciaArrastoTotal, () => {
+            console.log('Arrasto para frente e registro concluídos, preparando retorno seguro...');
+            animarArrasto(performance.now(), 1500, -distanciaArrastoTotal, () => {
+              console.log('Retorno seguro concluído.');
+              slider.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, clientX: startX, clientY: startY, button: 0 }));
+
+              setTimeout(() => {
+                console.log('Construção da tabela de correspondência concluída!', mapeamentoSliderShadow);
+                exibirTabelaMapeamento();
+              }, 300);
+            });
+          });
+
+        } catch (erro) {
+          console.error("Erro ao construir tabela de correspondência:", erro);
+          alert("Erro ao construir tabela de correspondência: " + erro.message);
+        } finally {
+          forcarCaptchaVisivel(false);
+        }
+      }
+
+      function exibirTabelaMapeamento() {
+        const divExibicao = document.getElementById('exibicao-urls-imagens');
+        if (!divExibicao) return;
+
+        let html = '<div style="margin-bottom: 10px;"><strong>Tabela Slider-Shadow:</strong></div>';
+        html += '<div style="font-size: 11px; max-height: 150px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 3px;">';
+
+        const entradas = Object.entries(mapeamentoSliderShadow);
+        entradas.sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+
+        entradas.forEach(([slider, shadow]) => {
+          html += `<div style="margin-bottom: 2px;">Slider ${slider}px → Shadow ${shadow}px</div>`;
+        });
+
+        html += '</div>';
+        html += `<div style="margin-top: 10px; font-size: 11px; color: #666;">`;
+        html += `Total de ${entradas.length} relações de mapeamento</div>`;
+        html += `Faixa Slider: ${Math.min(...entradas.map(e => parseInt(e[0])))} - ${Math.max(...entradas.map(e => parseInt(e[0])))}px<br>`;
+        html += `Faixa Shadow: ${Math.min(...entradas.map(e => e[1]))} - ${Math.max(...entradas.map(e => e[1]))}px`;
+        html += '</div>';
+
+        divExibicao.innerHTML = html;
+      }
+
+      function buscarDistanciaSliderDeShadow() {
+        const inputDistanciaShadow = document.getElementById('distancia-shadow');
+        const distanciaShadow = parseInt(inputDistanciaShadow.value);
+
+        if (isNaN(distanciaShadow)) {
+          alert('Por favor, insira uma distância Shadow válida');
+          return;
+        }
+
+        if (Object.keys(mapeamentoSliderShadow).length === 0) {
+          alert('Tabela de correspondência vazia, por favor construa a tabela primeiro');
+          return;
+        }
+
+        let sliderMaisProximo = null;
+        let menorDif = Infinity;
+
+        for (let slider in mapeamentoSliderShadow) {
+          const shadow = mapeamentoSliderShadow[slider];
+          const dif = Math.abs(shadow - distanciaShadow);
+          if (dif < menorDif) {
+            menorDif = dif;
+            sliderMaisProximo = parseInt(slider);
+          }
+        }
+
+        console.log(`Shadow ${distanciaShadow}px -> Slider ${sliderMaisProximo}px (diferença: ${menorDif.toFixed(1)}px)`);
+        document.getElementById('distancia-arrasto').value = sliderMaisProximo;
+
+        return sliderMaisProximo;
+      }
+
+      document.getElementById('buscar-slider').addEventListener('click', function () {
+        console.log('Iniciando busca de distância do slider...');
+        buscarDistanciaSliderDeShadow();
+      });
+
+      document.getElementById('construir-mapeamento').addEventListener('click', function () {
+        console.log('Iniciando construção da tabela Slider-Shadow...');
+        construirMapeamentoSliderShadow();
+      });
+
+      document.getElementById('calcular-auto').addEventListener('click', function () {
+        console.log('Iniciando cálculo automático de distância...');
+
+        const urlImagemSlider = window.obterUrlImagemSlider();
+        const urlImagemFundo = window.obterUrlImagemFundo();
+
+        if (!urlImagemSlider || !urlImagemFundo) {
+          alert('Por favor, clique primeiro em "Clique para começar a verificação" para carregar as imagens do captcha!');
+          return;
+        }
+
+        const comandoPython = `python calcular_distancia.py "${urlImagemSlider}" "${urlImagemFundo}"`;
+        console.log('Executar comando:', comandoPython);
+
+        const divExibicao = document.getElementById('exibicao-urls-imagens');
+        divExibicao.innerHTML = `
+            <div style="margin-bottom: 5px;"><strong>Links das Imagens:</strong></div>
+            <div style="font-size: 12px; margin-bottom: 5px;">
+              <strong>Imagem do Slider:</strong><br>
+              <span style="word-break: break-all; color: #007bff;">${urlImagemSlider}</span>
+            </div>
+            <div style="font-size: 12px; margin-bottom: 10px;">
+              <strong>Imagem de Fundo:</strong><br>
+              <span style="word-break: break-all; color: #007bff;">${urlImagemFundo}</span>
+            </div>
+            <div style="margin-bottom: 10px;">
+              <strong>Execute o seguinte comando no terminal:</strong><br>
+              <span style="background: #f8f9fa; padding: 5px; border-radius: 3px; font-family: monospace; font-size: 11px; display: block; margin-top: 5px;">
+                ${comandoPython}
+              </span>
+            </div>
+            <div style="color: #28a745; font-size: 11px;">
+              Após a execução, a distância será preenchida automaticamente no campo acima
+            </div>
+          `;
+
+        console.log('Execute o comando acima no terminal e verifique a saída para obter o resultado');
+      });
+
+      document.getElementById('testar-arrasto').addEventListener('click', async function () {
+        console.log('=== Iniciando teste de arrasto humanizado ===');
+
+        function suavizarQuad(t) {
+          return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        }
+
+        async function animarArrastoHumanizado(duracao, distancia) {
+          return new Promise(resolve => {
+            const slider = document.getElementById('aliyunCaptcha-sliding-slider');
+            const startX = slider.getBoundingClientRect().left + slider.getBoundingClientRect().width / 2;
+            const startY = slider.getBoundingClientRect().top + slider.getBoundingClientRect().height / 2;
+            const tempoInicio = performance.now();
+
+            const animar = (tempoAtual) => {
+              const tempoDecorrido = tempoAtual - tempoInicio;
+              let progresso = Math.min(tempoDecorrido / duracao, 1);
+              let progressoSuavizado = suavizarQuad(progresso);
+
+              const randomX = (Math.random() - 0.5) * 1;
+              const randomY = (Math.random() - 0.5) * 3;
+
+              const currentX = startX + distancia * progressoSuavizado + randomX;
+              const currentY = startY + randomY;
+
+              slider.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, clientX: currentX, clientY: currentY, button: 0 }));
+
+              if (progresso < 1) {
+                requestAnimationFrame(animar);
+              } else {
+                resolve();
+              }
+            };
+            requestAnimationFrame(animar);
+          });
+        }
+
+        try {
+          forcarCaptchaVisivel(true);
+          let slider = document.getElementById('aliyunCaptcha-sliding-slider');
+          if (!slider || slider.getBoundingClientRect().width === 0) {
+            console.log('Captcha não exibido, tentando clicar em "Clique para começar a verificação"');
+            document.getElementById('aliyunCaptcha-captcha-text')?.click();
+            slider = await aguardarElemento('#aliyunCaptcha-sliding-slider');
+            console.log('Elemento slider carregado!');
+          }
+
+          const ret = slider.getBoundingClientRect();
+          const startX = ret.left + ret.width / 2;
+          const startY = ret.top + ret.height / 2;
+          const distanciaArrasto = parseInt(document.getElementById('distancia-arrasto').value) + 1 || 238;
+
+          console.log(`Preparando para arrastar o slider, distância alvo: ${distanciaArrasto}px`);
+
+          slider.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: startX, clientY: startY, button: 0 }));
+          console.log('Mouse pressionado, iniciando arrasto humanizado...');
+
+          await animarArrastoHumanizado(1200, distanciaArrasto);
+          console.log('Arrasto concluído, preparando para soltar o mouse...');
+
+          const randomXFinal = Math.random() * 0.2 + 0.1;
+          const randomYFinal = (Math.random() - 0.5) * 3;
+          const finalX = startX + distanciaArrasto + randomXFinal;
+          const finalY = startY + randomYFinal;
+
+          slider.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, clientX: finalX, clientY: finalY, button: 0 }));
+          console.log(`Mouse solto, posição final: X=${finalX.toFixed(2)}, Y=${finalY.toFixed(2)}`);
+
+        } catch (erro) {
+          console.error('Erro ao testar arrasto:', erro);
+          alert('Erro ao testar arrasto: ' + erro.message);
+        } finally {
+          setTimeout(() => forcarCaptchaVisivel(false), 200);
+        }
+      });
+    };
+  </script>
+
+</body>
+
+</html>

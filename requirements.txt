@@ -1,0 +1,4 @@
+requests==2.31.0
+ddddocr==1.4.11
+undetected-chromedriver==3.5.5
+selenium==4.15.2
