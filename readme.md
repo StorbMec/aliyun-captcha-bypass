@@ -1,274 +1,254 @@
-# 🔐 Quebrador de Captcha Deslizante da Alibaba Cloud
+# Alibaba Cloud Slider Captcha Solver
 
-Ferramenta automática para resolver captchas deslizantes da Alibaba Cloud (Aliyun) com detecção inteligente de distância.
+Ferramenta em Python para **resolver captchas deslizantes (slider captcha) da Alibaba Cloud / Aliyun** usando análise de imagem e automação de navegador.
 
-## ⚖️ Aviso Legal
+O projeto pode ser usado **de forma standalone** ou integrado em outros scripts.
 
-**IMPORTANTE:** Esta ferramenta é fornecida apenas para fins educacionais, pesquisa de segurança e testes autorizados.
 
-- ✅ **Uso Permitido:** Pesquisa acadêmica, testes de segurança autorizados, aprendizado técnico
-- ❌ **Uso Proibido:** Acesso não autorizado, lucro comercial, web scraping malicioso, qualquer atividade ilegal
+---
 
-Ao usar esta ferramenta, você concorda em:
-1. Cumprir todas as leis e regulamentos aplicáveis
-2. Usar apenas em sistemas que você tem permissão para testar
-3. Assumir total responsabilidade pelo uso
+# Requisitos
 
-## 📋 Requisitos
+Sistema:
 
-### Sistema Operacional
 - Windows 10/11
-- macOS 10.15+
-- Linux (Ubuntu 20.04+)
+- Linux
+- macOS
 
-### Software Necessário
+Software necessário:
+
 - Python 3.8+
-- Google Chrome (última versão)
-- Git (opcional, para clonar repositório)
+- Google Chrome (versão recente)
 
-## 🚀 Instalação
+Bibliotecas Python utilizadas:
 
-### 1. Clone o Repositório
+- selenium
+- undetected-chromedriver
+- requests
+- ddddocr
+- opencv-python
+- numpy
+- pillow
+
+---
+
+# Instalação
+
+Clone o repositório:
+
 ```bash
-git clone <url-do-repositorio>
-cd quebrador-captcha-alibaba
+git clone [<repo-url>](https://github.com/StorbMec/aliyun-captcha-bypass)
+cd aliyun-captcha-solver
 ```
 
-### 2. Instale as Dependências
+Instale as dependências:
 
-#### Windows:
 ```bash
 pip install -r requirements.txt
+pip install selenium requests undetected-chromedriver ddddocr opencv-python numpy pillow
 ```
+---
 
-#### Linux/macOS:
-```bash
-pip3 install -r requirements.txt
-```
-
-### Dependências Instaladas:
-- `requests==2.31.0` - Para fazer requisições HTTP
-- `ddddocr==1.4.11` - Motor OCR para detectar posição do captcha
-- `undetected-chromedriver==3.5.5` - Driver Chrome não detectável
-- `selenium==4.15.2` - Automação de navegador
-
-## 📁 Estrutura de Arquivos
+# Estrutura do Projeto
 
 ```
-quebrador-captcha-alibaba/
-│
-├── pagina_captcha.html          # Página HTML com captcha de teste
-├── calcular_distancia.py        # Script para calcular distância do slider
-├── executar_quebrador_captcha.py # Script principal de automação
-├── stealth.min.js               # Script anti-detecção para navegador
-├── requirements.txt             # Dependências Python
-└── LEIAME.md                    # Este arquivo
+aliyun-captcha-solver/
+
+run_captcha_solver.py
+calculate_distance.py
+captcha_test_page.html
+stealth.min.js
+requirements.txt
+README.md
 ```
 
-## 🔧 Configuração
+# Configuração
 
-### 1. Configure suas Credenciais
+Antes de executar o solver, é necessário obter dois parâmetros do captcha:
 
-Edite o arquivo `pagina_captcha.html` e insira suas credenciais da Alibaba Cloud:
+- `prefix`
+- `SceneId`
+
+Eles podem ser encontrados no **Network tab do DevTools**.
+
+Passos:
+
+1. Abrir o site alvo
+2. Pressionar **F12**
+3. Ir em **Network**
+4. Filtrar por `captcha`
+5. Encontrar requisição para:
+
+```
+https://<prefix>.captcha-open.aliyuncs.com/
+```
+
+Exemplo:
+
+```
+https://no8xfe.captcha-open.aliyuncs.com/
+```
+
+Parâmetros extraídos:
+
+```
+prefix = no8xfe
+SceneId = 36qgs6xb
+```
+
+Depois atualize no HTML:
 
 ```javascript
-// Linha ~76
 window.AliyunCaptchaConfig = {
   region: 'cn',
-  prefix: 'SEU_PREFIXO_AQUI'  // ✅ Substitua com seu prefixo
-};
-
-// Linha ~194
-window.initAliyunCaptcha({
-  SceneId: "SEU_SCENE_ID_AQUI",  // ✅ Substitua com seu Scene ID
-  // ... resto da configuração
-});
-```
-
-### 2. Verifique a Instalação do Chrome
-
-O script detecta automaticamente a versão do Chrome. Se houver problemas:
-
-1. Atualize o Chrome para a versão mais recente
-2. Feche todas as janelas do Chrome antes de executar
-3. Se persistir, edite `executar_quebrador_captcha.py` (linha ~80) e force uma versão específica
-
-## 🎯 Uso
-
-### Modo Automático (Recomendado)
-
-Execute o script principal que automatiza todo o processo:
-
-```bash
-python executar_quebrador_captcha.py
-```
-
-O script irá:
-1. ✓ Detectar automaticamente a versão do Chrome
-2. ✓ Abrir a página com captcha
-3. ✓ Capturar URLs das imagens
-4. ✓ Calcular distância ideal com OCR
-5. ✓ Construir tabela de mapeamento slider-shadow
-6. ✓ Executar arrasto humanizado
-7. ✓ Verificar o captcha
-
-### Modo Manual
-
-#### Passo 1: Abra a Página
-```bash
-# Abra pagina_captcha.html no navegador
-# OU execute um servidor local:
-python -m http.server 8000
-# Acesse: http://localhost:8000/pagina_captcha.html
-```
-
-#### Passo 2: Clique em "Calcular Distância Automaticamente"
-Isso irá capturar as URLs das imagens do captcha.
-
-#### Passo 3: Execute o Calculador de Distância
-```bash
-python calcular_distancia.py "URL_IMAGEM_SLIDER" "URL_IMAGEM_FUNDO"
-```
-
-#### Passo 4: Use a Distância Calculada
-1. Insira o valor no campo "Distância Shadow"
-2. Clique em "Construir Tabela de Correspondência"
-3. Clique em "Buscar Slider"
-4. Clique em "Testar Arrasto do Slider"
-
-## 🔍 Como Funciona
-
-### 1. Detecção de Imagens
-O script intercepta requisições de rede para capturar URLs das imagens:
-- `shadow.png` - Imagem do slider/peça móvel
-- `back.png` - Imagem de fundo com o espaço vazio
-
-### 2. Cálculo de Distância
-Usa a biblioteca `ddddocr` (OCR especializado) para:
-- Analisar a imagem do slider
-- Detectar a posição exata do encaixe na imagem de fundo
-- Retornar coordenadas (x, y) precisas
-
-### 3. Mapeamento Slider-Shadow
-Constrói uma tabela que mapeia:
-- Distância real do arrasto (pixels) → Posição visual da sombra
-- Isso é necessário porque a distância física ≠ distância visual
-
-### 4. Arrasto Humanizado
-Simula movimento humano com:
-- Curvas de aceleração (easing)
-- Micro-variações aleatórias
-- Timing natural
-- Evita detecção de bot
-
-## 🐛 Solução de Problemas
-
-### Erro: "Chrome não foi possível iniciar"
-**Solução:**
-1. Atualize o Chrome: `chrome://settings/help`
-2. Feche TODAS as janelas do Chrome
-3. Execute novamente
-
-### Erro: "ddddocr não instalado"
-**Solução:**
-```bash
-pip install --upgrade ddddocr
-```
-
-### Erro: "Timeout aguardando elemento"
-**Solução:**
-1. Verifique sua conexão com internet
-2. Verifique se o Scene ID está correto
-3. Tente recarregar a página
-
-### Captcha Falha Mesmo com Distância Correta
-**Possíveis Causas:**
-1. IP bloqueado (muitas tentativas)
-2. Detecção de automação
-3. Variações no captcha
-4. Ajuste fino necessário (+/- 1-2 pixels)
-
-### Erro: "Formato inesperado" ao calcular distância
-**Solução:**
-1. Verifique se as URLs das imagens são válidas
-2. Teste o download manual das imagens
-3. Reinstale ddddocr: `pip install --upgrade --force-reinstall ddddocr`
-
-## 📊 Saída Esperada
-
-### Sucesso:
-```
-==================================================
-   PROCESSO CONCLUÍDO
-==================================================
-
-📋 VERIFICANDO RESULTADO:
-   1. Olhe para a janela do Chrome
-   2. Se aparecer 'verificação bem-sucedida' = SUCESSO ✓
-   3. Se aparecer erro ou nada acontecer = Falhou
-
-💡 PARA VER O TOKEN:
-   1. Na janela do Chrome, pressione F12
-   2. Vá na aba 'Console'
-   3. Procure por: Verificação aprovada! Parâmetros:
-   4. O token estará após essa mensagem
-```
-
-### Token de Verificação:
-O token de verificação será exibido no console do navegador em formato JSON:
-```javascript
-{
-  captchaVerifyParam: "...",
-  sessionId: "...",
-  token: "..."
+  prefix: 'SEU_PREFIX'
 }
 ```
 
-## 🔒 Segurança e Privacidade
+E:
 
-- ✅ Todo código é executado localmente
-- ✅ Nenhum dado é enviado para servidores externos
-- ✅ URLs das imagens são temporárias
-- ✅ Credenciais ficam apenas no seu arquivo HTML
-
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas! Por favor:
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/NovaFuncionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/NovaFuncionalidade`)
-5. Abra um Pull Request
-
-## 📝 Licença
-
-Este projeto é fornecido "como está", sem garantias. Use por sua conta e risco.
-
-## ⚠️ Aviso Final
-
-**Esta ferramenta é apenas para fins educacionais e de pesquisa.**
-
-O uso indevido desta ferramenta pode:
-- Violar termos de serviço
-- Resultar em bloqueio de IP/conta
-- Ter consequências legais
-
-O autor não se responsabiliza por qualquer uso indevido ou danos causados pelo uso desta ferramenta.
+```javascript
+SceneId: "SEU_SCENE_ID"
+```
 
 ---
 
-## 📞 Suporte
+# Uso
 
-Para problemas ou dúvidas:
-1. Verifique a seção "Solução de Problemas"
-2. Revise os logs de erro
-3. Abra uma issue no repositório com:
-   - Descrição do problema
-   - Passos para reproduzir
-   - Logs de erro completos
-   - Versão do Python e Chrome
+Execute o script principal:
+
+```bash
+python run_captcha_solver.py
+```
+
+Se o captcha for resolvido com sucesso, será retornado:
+
+```
+captchaVerifyParam: xxxxxxxxxxxxx
+```
 
 ---
 
-**Desenvolvido com 💙 para pesquisa de segurança**
+# Como Funciona
+
+O processo segue basicamente estes passos:
+
+1. Abrir página com captcha
+2. Capturar URLs das imagens do captcha
+3. Baixar as imagens (slider + background)
+4. Detectar a posição do gap usando OpenCV
+5. Calcular distância de arrasto
+6. Simular movimento humano do mouse
+7. Capturar o token de verificação
+
+---
+
+# Calcular Distância Manualmente
+
+Também é possível rodar apenas o script de análise de imagem:
+
+```bash
+python calculate_distance.py <slider_url> <background_url>
+```
+
+Ele irá:
+
+- baixar as imagens
+- detectar o gap
+- retornar a distância recomendada de arrasto
+
+---
+
+# Ajustes de Movimento
+
+O movimento do slider utiliza:
+
+- easing function (easeInOut)
+- pequenas variações aleatórias
+- tempo de arrasto aproximado de usuário real
+
+Isso ajuda a reduzir detecção de automação.
+
+---
+
+# Problemas Comuns
+
+Captcha falha mesmo com distância correta.
+
+Possíveis causas:
+
+- IP bloqueado
+- detecção de automação
+- pequena variação na distância
+
+Solução comum:
+
+```
+ajustar +-1 a 3 pixels
+```
+
+---
+
+Erro ao iniciar Chrome:
+
+- atualizar Chrome
+- fechar todas instâncias abertas
+- reinstalar `undetected-chromedriver`
+
+---
+
+Erro em análise de imagem:
+
+Ajustar parâmetros do OpenCV:
+
+```python
+cv2.Canny(gray, 50, 150)
+```
+
+---
+
+# Integração em Outros Scripts
+
+Exemplo simples usando subprocess:
+
+```python
+import subprocess
+import re
+
+result = subprocess.run(
+    ["python", "run_captcha_solver.py"],
+    capture_output=True,
+    text=True
+)
+
+match = re.search(r'captchaVerifyParam:(.+)', result.stdout)
+
+if match:
+    captcha_param = match.group(1).strip()
+```
+
+---
+
+# Contribuição
+
+Pull requests são bem-vindos.
+
+Fluxo sugerido:
+
+```
+fork
+create branch
+commit
+push
+open pull request
+```
+
+---
+
+# Agradecimentos
+
+Este projeto foi parcialmente inspirado por:
+
+https://github.com/mucsbr/aliyun-captcha-fake
+
+Agradecimentos ao autor pelo trabalho relacionado ao captcha da Aliyun.
